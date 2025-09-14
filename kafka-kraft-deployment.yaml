@@ -1,0 +1,55 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: kafka-cluster
+  namespace: kafka
+spec:
+  kafka:
+    version: 3.6.0
+    replicas: 1
+    listeners:
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+      - name: external
+        port: 29092
+        type: nodeport
+        tls: false
+        configuration:
+          bootstrap:
+            nodePort: 32092
+    config:
+      # Single replica settings for development
+      offsets.topic.replication.factor: 1
+      transaction.state.log.replication.factor: 1
+      transaction.state.log.min.isr: 1
+      default.replication.factor: 1
+      min.insync.replicas: 1
+      # KRaft mode settings
+      inter.broker.protocol.version: "3.6"
+      # Allow everyone if no ACL found (like your local setup)
+      authorizer.class.name: org.apache.kafka.metadata.authorizer.StandardAuthorizer
+      allow.everyone.if.no.acl.found: "true"
+  # Use KRaft mode (no Zookeeper)
+  zookeeper:
+    replicas: 0
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-external
+  namespace: kafka
+spec:
+  type: NodePort
+  selector:
+    strimzi.io/cluster: kafka-cluster
+    strimzi.io/name: kafka-cluster-kafka
+  ports:
+    - port: 9092
+      targetPort: 9092
+      nodePort: 32092
+      name: kafka
