@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: conduktor-console
+  namespace: kafka-conduktor
+spec:
+  selector:
+    app: conduktor-console
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+      nodePort: 30080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conduktor-console
+  namespace: kafka-conduktor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: conduktor-console
+  template:
+    metadata:
+      labels:
+        app: conduktor-console
+    spec:
+      containers:
+        - name: conduktor-console
+          image: conduktor/conduktor-console:1.36.2
+          ports:
+            - containerPort: 8080
+          env:
+            - name: CDK_DATABASE_URL
+              value: "postgresql://conduktor:some_password@postgresql:5432/conduktor-console"
+            - name: CDK_CLUSTERS_0_ID
+              value: "default"
+            - name: CDK_CLUSTERS_0_NAME
+              value: "My Local Kafka Cluster"
+            - name: CDK_CLUSTERS_0_COLOR
+              value: "#0013E7"
+            - name: CDK_CLUSTERS_0_BOOTSTRAPSERVERS
+              value: "SASL_SSL://kafka1:9093"
+            - name: CDK_CLUSTERS_0_PROPERTIES
+              value: |
+                security.protocol=SASL_SSL
+                sasl.mechanism=PLAIN
+                sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="admin" password="admin-secret";
+                ssl.truststore.location=/opt/conduktor/ssl/kafka.server.truststore.jks
+                ssl.truststore.password=changeit
+                ssl.endpoint.identification.algorithm=
+          volumeMounts:
+            - name: conduktor-ssl-volume
+              mountPath: /opt/conduktor/ssl
+              readOnly: true
+      volumes:
+        - name: conduktor-ssl-volume
+          secret:
+            secretName: kafka-ssl-certs
