@@ -1,8 +1,21 @@
 # Create namespace
 kubectl create namespace dev-kafka
 
+# Create PersistentVolumeClaim for Kafka data
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kafka-data-pvc
+  namespace: dev-kafka
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
 # Create Kafka deployment
-cat <<EOF | kubectl apply -f -~
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -42,7 +55,7 @@ spec:
         - name: KAFKA_INTER_BROKER_LISTENER_NAME
           value: "PLAINTEXT"
         - name: KAFKA_LOG_DIRS
-          value: "/tmp/kraft-combined-logs"
+          value: "/kafka/data"
         - name: CLUSTER_ID
           value: "4L6g3nShT-eMCtK--X86sw"
         - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
@@ -53,11 +66,15 @@ spec:
           value: "1"
         - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
           value: "1"
+        - name: KAFKA_MESSAGE_MAX_BYTES
+          value: "10485760"  # 10MB
+        - name: KAFKA_REPLICA_FETCH_MAX_BYTES
+          value: "10485760" # 10MB
+        - name: KAFKA_FETCH_MESSAGE_MAX_BYTES
+          value: "10485760"   # for consumers          
         volumeMounts:
-        - name: kafka-logs
-          mountPath: /tmp/kraft-combined-logs
-        - name: kafka-secrets
-          mountPath: /etc/kafka/secrets
+        - name: kafka-data
+          mountPath: /kafka/data
         readinessProbe:
           tcpSocket:
             port: 9092
@@ -69,10 +86,9 @@ spec:
           initialDelaySeconds: 60
           periodSeconds: 30
       volumes:
-      - name: kafka-logs
-        emptyDir: {}
-      - name: kafka-secrets
-        emptyDir: {}
+      - name: kafka-data
+        persistentVolumeClaim:
+          claimName: kafka-data-pvc
 ---
 apiVersion: v1
 kind: Service
