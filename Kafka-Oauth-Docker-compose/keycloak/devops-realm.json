@@ -1,0 +1,80 @@
+{
+  "realm": "devops",
+  "enabled": true,
+  "displayName": "DevOps Local",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "kafka-ui-admin",
+        "description": "Local administrator role for Kafka UI access"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "kafka-ui",
+      "name": "Kafka UI",
+      "description": "Local OAuth client for Kafka UI",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "kafka-ui-local-secret",
+      "redirectUris": [
+        "http://localhost:8082/login/oauth2/code/keycloak"
+      ],
+      "webOrigins": [
+        "http://localhost:8082"
+      ],
+      "publicClient": false,
+      "bearerOnly": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:8082/*"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "kafka-admin",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Kafka",
+      "lastName": "Admin",
+      "email": "kafka-admin@example.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "kafka-ui-admin"
+      ],
+      "requiredActions": []
+    }
+  ]
+}

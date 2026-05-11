@@ -1,0 +1,22 @@
+kafka:
+  clusters:
+    - name: local
+      bootstrapServers: kafka:9093
+      readOnly: false
+
+auth:
+  type: OAUTH2
+  oauth2:
+    client:
+      keycloak:
+        clientId: kafka-ui
+        clientSecret: kafka-ui-local-secret
+        scope: [ "openid", "profile", "email" ]
+        client-name: Keycloak
+        provider: keycloak
+        redirect-uri: http://localhost:8082/login/oauth2/code/keycloak
+        authorization-grant-type: authorization_code
+        issuer-uri: http://keycloak.localhost:8081/realms/devops
+        user-name-attribute: preferred_username
+        custom-params:
+          type: keycloak
